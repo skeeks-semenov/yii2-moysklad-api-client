@@ -1,7 +1,9 @@
 Yii2 moysklad api client
 ===================================
 
-https://dev.moysklad.ru/doc/api/
+https://dev.moysklad.ru/doc/api/remap/1.2/#mojsklad-json-api
+
+Для того чтобы успешно взаимодействовать с JSON API онлайн-сервиса МойСклад, необходимо аутентифицироваться в системе. МойСклад поддерживает аутентификацию по протоколу Basic Auth и с использованием токена доступа.
 
 
 Installation
@@ -46,7 +48,7 @@ How to use
 ----------
 
 ```php
-\Yii::$app->moyskladApiClient->getProfileApiMethod();
+\Yii::$app->moyskladApiClient->getEntityVariantApiMethod();
 ```
 
 ___

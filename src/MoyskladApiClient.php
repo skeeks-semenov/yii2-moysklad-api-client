@@ -81,7 +81,7 @@ class MoyskladApiClient extends Component
         ]);
 
         $request = $client->createRequest()
-            ->setMethod("GET")
+            ->setMethod("POST")
             ->setUrl($this->base_api_url."security/token")
             ->addHeaders(['Authorization' => 'Basic '.base64_encode($this->email.":".$this->password)])
             ->setOptions([
