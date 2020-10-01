@@ -49,6 +49,7 @@ How to use
 
 ```php
 \Yii::$app->moyskladApiClient->getEntityVariantApiMethod();
+\Yii::$app->moyskladApiClient->getEntityProductApiMethod();
 ```
 
 ___
