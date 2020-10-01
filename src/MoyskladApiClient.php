@@ -173,4 +173,19 @@ class MoyskladApiClient extends Component
         return (array)$response->data;
     }
 
+    /**
+     * Получить список Товаров
+     * Запрос на получение всех Товаров для данной учетной записи. Результат: Объект JSON, включающий в себя поля:
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-towar-towary
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityProductApiMethod()
+    {
+        $response = $this->_createApiRequest("entity/product")->send();
+        return (array)$response->data;
+    }
+
 }
