@@ -188,4 +188,19 @@ class MoyskladApiClient extends Component
         return (array)$response->data;
     }
 
+    /**
+     * Получить список комплектов
+     * Запрос на получение всех комплектов для данной учетной записи.
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-komplekt-komplekty
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityBundleApiMethod()
+    {
+        $response = $this->_createApiRequest("entity/bundle")->send();
+        return (array)$response->data;
+    }
+
 }
