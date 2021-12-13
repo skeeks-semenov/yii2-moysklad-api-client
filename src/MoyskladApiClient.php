@@ -40,7 +40,7 @@ class MoyskladApiClient extends Component
     /**
      * @var int
      */
-    public $request_timeout = 5;
+    public $request_timeout = 10000;
 
     /**
      * @var int
@@ -50,7 +50,7 @@ class MoyskladApiClient extends Component
     /**
      * @var string
      */
-    public $cache_key = 'moysklad_access';
+    public $cache_key = 'moysklad_access_v4';
 
     /**
      * @throws InvalidConfigException
@@ -112,11 +112,11 @@ class MoyskladApiClient extends Component
         if ($data === false) {
             $data = $this->_getAccessCredentialsFromApi();
 
-            if (!$data || $data['error']) {
+            if (!$data || ArrayHelper::getValue($data, 'error')) {
                 throw new Exception("Ошибка получения ключа доступа к апи: ".print_r($data, true)." Пользователь: ".$this->email);
             }
 
-            \Yii::$app->cache->set($this->cache_key, $data, 3600 * 24);
+            \Yii::$app->cache->set($this->cache_key, $data, 10);
         }
 
         return (array)$data;
@@ -138,7 +138,7 @@ class MoyskladApiClient extends Component
      * @return \yii\httpclient\Request
      * @throws InvalidConfigException
      */
-    protected function _createApiRequest(string $api_method, string $request_method = "GET")
+    public function createApiRequest(string $api_method, string $request_method = "GET")
     {
         $client = new Client([
             'requestConfig' => [
@@ -147,7 +147,7 @@ class MoyskladApiClient extends Component
         ]);
 
         $request = $client->createRequest()
-            ->setMethod("GET")
+            ->setMethod($request_method)
             ->setUrl($this->base_api_url.$api_method)
             ->addHeaders(['Authorization' => 'Bearer '.$this->accessToken])
             ->setOptions([
@@ -167,9 +167,9 @@ class MoyskladApiClient extends Component
      * @throws InvalidConfigException
      * @throws \yii\httpclient\Exception
      */
-    public function getEntityVariantApiMethod()
+    public function getEntityVariantApiMethod($offset = 0)
     {
-        $response = $this->_createApiRequest("entity/variant")->send();
+        $response = $this->createApiRequest("entity/variant" . ($offset ? "?offset={$offset}" : ""))->send();
         return (array)$response->data;
     }
 
@@ -182,9 +182,9 @@ class MoyskladApiClient extends Component
      * @throws InvalidConfigException
      * @throws \yii\httpclient\Exception
      */
-    public function getEntityProductApiMethod()
+    public function getEntityProductApiMethod($id = null)
     {
-        $response = $this->_createApiRequest("entity/product")->send();
+        $response = $this->createApiRequest("entity/product" . ($id ? "/{$id}" : ""))->send();
         return (array)$response->data;
     }
 
@@ -199,7 +199,126 @@ class MoyskladApiClient extends Component
      */
     public function getEntityBundleApiMethod()
     {
-        $response = $this->_createApiRequest("entity/bundle")->send();
+        $response = $this->createApiRequest("entity/bundle")->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Получить список Заказов покупателей
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/documents/#dokumenty-zakaz-pokupatelq-poluchit-spisok-zakazow-pokupatelej
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityCustomerorderApiMethod($id = null)
+    {
+        $response = $this->createApiRequest("entity/customerorder" . ($id ? "/{$id}" : ""))->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityPaymentinApiMethod($id = null)
+    {
+        $response = $this->createApiRequest("entity/paymentin" . ($id ? "/{$id}" : ""))->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Получить список Заказов покупателей
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/documents/#dokumenty-zakaz-pokupatelq-poluchit-spisok-zakazow-pokupatelej
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityCustomerorderAttributeApiMethod($id)
+    {
+        $response = $this->createApiRequest("entity/customerorder/metadata/attributes/" . $id)->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Создать Заказ покупателя
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/documents/#dokumenty-zakaz-pokupatelq-sozdat-zakaz-pokupatelq
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function postEntityCustomerorderApiMethod($data = [])
+    {
+        $response = $this
+            ->createApiRequest("entity/customerorder", "POST")
+            ->setData($data)
+            ->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Создать Заказ покупателя
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/documents/#dokumenty-vhodqschij-platezh-sozdat-vhodqschij-platezh
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function postEntityPaymentinApiMethod($data = [])
+    {
+        $response = $this
+            ->createApiRequest("entity/paymentin", "POST")
+            ->setData($data)
+            ->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Получить список Контрагентов
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-kontragent-kontragenty
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityCounterpartyApiMethod($id = null)
+    {
+        $response = $this->createApiRequest("entity/counterparty" . ($id ? "/{$id}" : ""))->send();
+        return (array)$response->data;
+    }
+
+    /**
+     * Создать Контрагента
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-kontragent-sozdat-kontragenta
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function postEntityCounterpartyApiMethod($data)
+    {
+        $response = $this
+            ->createApiRequest("entity/counterparty", "POST")
+            ->setData($data)
+            ->send()
+        ;
+        return (array)$response->data;
+    }
+
+    /**
+     * Получить список юрлиц
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-jurlico-jurlica
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityOrganizationApiMethod($id = null)
+    {
+        $response = $this->createApiRequest("entity/organization" . ($id ? "/{$id}" : ""))->send();
         return (array)$response->data;
     }
 
