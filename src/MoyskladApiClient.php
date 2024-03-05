@@ -25,7 +25,7 @@ class MoyskladApiClient extends Component
     /**
      * @var string
      */
-    public $base_api_url = "https://online.moysklad.ru/api/remap/1.2/";
+    public $base_api_url = "https://api.moysklad.ru/api/remap/1.2/";
 
     /**
      * @var string
@@ -83,7 +83,10 @@ class MoyskladApiClient extends Component
         $request = $client->createRequest()
             ->setMethod("POST")
             ->setUrl($this->base_api_url."security/token")
-            ->addHeaders(['Authorization' => 'Basic '.base64_encode($this->email.":".$this->password)])
+            ->addHeaders([
+                'Authorization' => 'Basic '.base64_encode($this->email.":".$this->password),
+                'Accept-Encoding' => 'gzip'
+            ])
             ->setOptions([
                 'timeout'      => $this->request_timeout,
                 'maxRedirects' => $this->request_maxRedirects,
@@ -141,6 +144,7 @@ class MoyskladApiClient extends Component
     public function createApiRequest(string $api_method, string $request_method = "GET")
     {
         $client = new Client([
+            'transport' => 'yii\httpclient\CurlTransport',
             'requestConfig' => [
                 'format' => Client::FORMAT_JSON,
             ],
@@ -149,10 +153,75 @@ class MoyskladApiClient extends Component
         $request = $client->createRequest()
             ->setMethod($request_method)
             ->setUrl($this->base_api_url.$api_method)
-            ->addHeaders(['Authorization' => 'Bearer '.$this->accessToken])
+            ->addHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Accept-Encoding' => 'gzip',
+            ])
             ->setOptions([
                 'timeout'      => $this->request_timeout,
                 'maxRedirects' => $this->request_maxRedirects,
+                CURLOPT_ACCEPT_ENCODING => 'gzip'
+            ]);
+
+        return $request;
+    }
+
+    /**
+     * @param string $api_method
+     * @param string $request_method
+     * @return \yii\httpclient\Request
+     * @throws InvalidConfigException
+     */
+    public function createApiRequestMeta(string $meta_url, string $request_method = "GET")
+    {
+        $client = new Client([
+            'transport' => 'yii\httpclient\CurlTransport',
+            'requestConfig' => [
+                'format' => Client::FORMAT_JSON,
+            ],
+        ]);
+
+        $request = $client->createRequest()
+            ->setUrl($meta_url)
+            ->addHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Accept-Encoding' => 'gzip'
+            ])
+            ->setOptions([
+                'timeout'      => $this->request_timeout,
+                'maxRedirects' => $this->request_maxRedirects,
+                CURLOPT_ACCEPT_ENCODING => 'gzip'
+            ]);
+
+        return $request;
+    }
+
+    /**
+     * @param string $api_method
+     * @param string $request_method
+     * @return \yii\httpclient\Request
+     * @throws InvalidConfigException
+     */
+    public function createApiRequestByUrl(string $url, string $request_method = "GET")
+    {
+        $client = new Client([
+            'transport' => 'yii\httpclient\CurlTransport',
+            'requestConfig' => [
+                'format' => Client::FORMAT_JSON,
+            ],
+        ]);
+
+        $request = $client->createRequest()
+            ->setMethod($request_method)
+            ->setUrl($url)
+            ->addHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Accept-Encoding' => 'gzip'
+            ])
+            ->setOptions([
+                'timeout'      => $this->request_timeout,
+                'maxRedirects' => $this->request_maxRedirects,
+                CURLOPT_ACCEPT_ENCODING => 'gzip'
             ]);
 
         return $request;
@@ -170,6 +239,20 @@ class MoyskladApiClient extends Component
     public function getEntityVariantApiMethod($offset = 0)
     {
         $response = $this->createApiRequest("entity/variant" . ($offset ? "?offset={$offset}" : ""))->send();
+        return (array)$response->data;
+    }
+    /**
+     * Получить список Ассортимента
+     * Сущность assortment представляет собой список всех товаров, услуг, комплектов, серий и модификаций с полями stock, reserve, inTransit, quantity, показывающими остаток, резерв, ожидание и доступно каждой из сущностей (для комплектов и услуг эти поля не выводятся). Данные поля могут быть рассчитаны в зависимости от даты и склада с использованием параметров фильтрации stockMoment и stockStore.
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-assortiment
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityAssortmentApiMethod($offset = 0)
+    {
+        $response = $this->createApiRequest("entity/assortment" . ($offset ? "?offset={$offset}" : ""))->send();
         return (array)$response->data;
     }
 
@@ -319,6 +402,19 @@ class MoyskladApiClient extends Component
     public function getEntityOrganizationApiMethod($id = null)
     {
         $response = $this->createApiRequest("entity/organization" . ($id ? "/{$id}" : ""))->send();
+        return (array)$response->data;
+    }
+    /**
+     * Получить склад
+     * @see https://dev.moysklad.ru/doc/api/remap/1.2/dictionaries/#suschnosti-sklad-poluchit-sklady
+     *
+     * @return array
+     * @throws InvalidConfigException
+     * @throws \yii\httpclient\Exception
+     */
+    public function getEntityStoreApiMethod($id = null)
+    {
+        $response = $this->createApiRequest("entity/store" . ($id ? "/{$id}" : ""))->send();
         return (array)$response->data;
     }
 
